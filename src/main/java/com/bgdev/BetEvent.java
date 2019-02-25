@@ -1,5 +1,11 @@
 package com.bgdev;
 
-public interface BetEvent {
+import java.time.LocalDate;
+import java.time.LocalTime;
 
+public interface BetEvent {
+    LocalDate getEventDate();
+    LocalTime getEventTime();
+    String getHomeTeam();
+    String getAwayTeam();
 }

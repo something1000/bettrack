@@ -13,8 +13,10 @@ public class App
         STSParser sts = new STSParser();
 
         List<BetEvent> be = sts.parse("https://www.sts.pl/pl/oferta/zaklady-bukmacherskie/zaklady-sportowe/?action=offer&sport=184&region=6521&league=4080");
+        BetTrackDatabase btb = BetTrackDatabase.getBetTrackDatabase();
         for(BetEvent e : be){
-            System.out.println(e);
+            // System.out.println(e);
+            btb.insertMatch(e);
         }
     }
 }

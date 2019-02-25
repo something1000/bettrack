@@ -5,12 +5,16 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class STSParser implements BetParser{
 
+    private final String bookieName = "STS";
    // private final String url ="https://www.sts.pl/pl/oferta/zaklady-bukmacherskie/zaklady-sportowe/?action=offer&sport=184&region=6521&league=74367"; //"https://www.sts.pl/pl/oferta/zaklady-bukmacherskie/zaklady-sportowe/?action=offer&sport=184&region=6521&league=4080";
     private static final Pattern dateRegExp = Pattern.compile("([0-9]{2}\\.){2}[0-9]{4}");
 
@@ -27,14 +31,14 @@ public class STSParser implements BetParser{
 
         ArrayList<BetEvent> eventsList = new ArrayList<>();
 
-        String date = null;
-        String lastDate = null;
+        LocalDate date = null;
+        LocalDate lastDate = null;
         for(Element e : events){
             date = getEventDate(e);
             if(date == null)
                 date = lastDate;
 
-            String time = getEventTime(e);
+            LocalTime time = getEventTime(e);
 
             BetEvent1x2 bet = getEventBets(e);
             bet.setEventDate(date);
@@ -48,7 +52,7 @@ public class STSParser implements BetParser{
     }
 
 
-    public String getEventDate(Element elementWithDate){
+    public LocalDate getEventDate(Element elementWithDate){
         Elements searchDate = elementWithDate.getElementsByClass("date");
         if(searchDate.isEmpty()){
             return null;
@@ -58,16 +62,17 @@ public class STSParser implements BetParser{
         if(!extractDate.find()){
             return null;
         }
-        return extractDate.group();
+        LocalDate date = LocalDate.parse(extractDate.group(), DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+        return date;
     }
 
-    public String getEventTime(Element elementWithTime){
+    public LocalTime getEventTime(Element elementWithTime){
         Elements searchTime = elementWithTime.getElementsByClass("date_time");
         if(searchTime == null) return null;
-        String time = searchTime.get(0).getElementsByTag("a").text();
+        String timeString = searchTime.get(0).getElementsByTag("a").text();
+        LocalTime time = LocalTime.parse(timeString, DateTimeFormatter.ofPattern("HH:mm"));
         return time;
     }
-
 
     public BetEvent1x2 getEventBets(Element elementWithBets){
         Elements searchBets = elementWithBets.getElementsByClass("subTable");
