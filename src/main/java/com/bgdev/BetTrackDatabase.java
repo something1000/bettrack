@@ -1,7 +1,11 @@
 package com.bgdev;
 
+import com.bgdev.bet.Bet;
+import com.bgdev.sportevents.Event;
+
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class BetTrackDatabase {
 
@@ -39,17 +43,20 @@ public class BetTrackDatabase {
         }
     }
 
-    public void insertMatch(BetEvent event){
+    public void insertMatch(Bet bet){
         String insertMatch = "{? = CALL InsertMatch(?,?,?)}";
         try {
             CallableStatement statement = connection.prepareCall(insertMatch);
-            statement.setString("p_home_team", event.getHomeTeam());
-            statement.setString("p_away_team", event.getAwayTeam());
-            LocalDateTime lmatchDate = LocalDateTime.of(event.getEventDate(), event.getEventTime());//LocalDateTime.parse(event.getEventDate() + " " + event.getEventTime());
+            List<String> teams = bet.getEvent().getParticipant();
+            statement.setString("p_home_team", teams.get(0));
+            statement.setString("p_away_team", teams.get(1));
 
-            Timestamp matchDate = Timestamp.valueOf(lmatchDate);
+           // LocalDateTime lmatchDate = LocalDateTime.of(bet.getEventDate(), bet.getEventTime());//LocalDateTime.parse(event.getEventDate() + " " + event.getEventTime());
+            Timestamp matchDate = Timestamp.valueOf(bet.getDateTime());
+
             statement.setTimestamp("p_match_date", matchDate);
             ResultSet rs = statement.executeQuery();
+            rs.next();
             System.out.println("MECZ ID: "+ rs.getInt(1));
 
         } catch (SQLException e) {

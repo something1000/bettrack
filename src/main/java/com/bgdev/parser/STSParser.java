@@ -1,24 +1,28 @@
-package com.bgdev;
+package com.bgdev.parser;
 
+import com.bgdev.bet.Bet;
+import com.bgdev.bet.Bet1X2;
+import com.bgdev.sportevents.SportMatch;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class STSParser implements BetParser{
+public class STSParser implements BookieParser {
 
     private final String bookieName = "STS";
    // private final String url ="https://www.sts.pl/pl/oferta/zaklady-bukmacherskie/zaklady-sportowe/?action=offer&sport=184&region=6521&league=74367"; //"https://www.sts.pl/pl/oferta/zaklady-bukmacherskie/zaklady-sportowe/?action=offer&sport=184&region=6521&league=4080";
     private static final Pattern dateRegExp = Pattern.compile("([0-9]{2}\\.){2}[0-9]{4}");
 
-    public ArrayList<BetEvent> parse(String url){
+    public ArrayList<Bet> parse(String url){
         Element bookieOffer;
         try {
             bookieOffer = Jsoup.connect(url).get().getElementById("offerTables");
@@ -29,7 +33,7 @@ public class STSParser implements BetParser{
 
         Elements events = bookieOffer.getElementsByClass("col3");
 
-        ArrayList<BetEvent> eventsList = new ArrayList<>();
+        ArrayList<Bet> eventsList = new ArrayList<>();
 
         LocalDate date = null;
         LocalDate lastDate = null;
@@ -39,10 +43,9 @@ public class STSParser implements BetParser{
                 date = lastDate;
 
             LocalTime time = getEventTime(e);
+            LocalDateTime datetime = LocalDateTime.of(date, time);
 
-            BetEvent1x2 bet = getEventBets(e);
-            bet.setEventDate(date);
-            bet.setEventTime(time);
+            Bet1X2 bet = getEventBets(e, datetime);
 
             eventsList.add(bet);
             lastDate = date;
@@ -74,7 +77,7 @@ public class STSParser implements BetParser{
         return time;
     }
 
-    public BetEvent1x2 getEventBets(Element elementWithBets){
+    public Bet1X2 getEventBets(Element elementWithBets, LocalDateTime datetime){
         Elements searchBets = elementWithBets.getElementsByClass("subTable");
         if(searchBets == null)
             return null;
@@ -85,16 +88,11 @@ public class STSParser implements BetParser{
 
         int index = 0;
         for(Element e : searchBets){
-            //"([0-9]{1,2}\\.[0-9]{2})");
             team[index] = e.text().substring(0,e.text().length()-5);
             odds[index++] = Float.parseFloat(e.getElementsByTag("span").text());
         }
-        BetEvent1x2 betEvent = new BetEvent1x2();
-        betEvent.setHomeTeam(team[0].trim());
-        betEvent.setAwayTeam(team[2].trim());
-        betEvent.setHomeOdds(odds[0]);
-        betEvent.setDrawOdds(odds[1]);
-        betEvent.setAwayOdds(odds[2]);
+        SportMatch sportMatch = new SportMatch(datetime, team[0], team[2]);
+        Bet1X2 betEvent = new Bet1X2(sportMatch, odds[0],odds[1],odds[2]);
 
         return betEvent;
     }
